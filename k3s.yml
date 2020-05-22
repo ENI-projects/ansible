@@ -1,0 +1,5 @@
+---
+- name: Installing k3s cluster
+  hosts: k3s
+  roles:
+    - k3s

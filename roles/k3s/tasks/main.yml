@@ -1,0 +1,29 @@
+---
+# tasks file for k3s
+
+- name: Setting up k3s master
+  block:
+    - name: Install k3s server using rancher's script
+      shell: curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} INSTALL_K3S_EXEC=server sh -
+
+    - name: wait for /var/lib/rancher/k3s/server/node-token
+      wait_for:
+        path: /var/lib/rancher/k3s/server/node-token
+
+    - name: Read node-token from master
+      slurp:
+        src: /var/lib/rancher/k3s/server/node-token
+      register: node_token
+
+    - name: Store Master node-token
+      set_fact: 
+        token: "{{ node_token.content | b64decode | regex_replace('\n', '') }}"
+  when: "'master' in hostvars[inventory_hostname].group_names"
+
+- name: debug
+  debug:
+    msg: "{{ hostvars[groups['master'][0]]['token'] }}"
+- name: Install k3s agent on workers using rancher's script
+  shell: | 
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} INSTALL_K3S_EXEC=agent K3S_TOKEN={{ hostvars[groups['master'][0]]['token'] }} K3S_URL="https://{{ master_ip }}:6443" sh -
+  when: "'worker' in hostvars[inventory_hostname].group_names"
