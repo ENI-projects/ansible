@@ -1,0 +1,9 @@
+[master]
+master1 ansible_host=51.158.122.121 ansible_user=root
+[worker]
+worker1 ansible_host=51.158.104.105 ansible_user=root
+worker2 ansible_host=51.158.110.55 ansible_user=root
+
+[k3s:children]
+master
+worker
